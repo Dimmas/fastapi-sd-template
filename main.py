@@ -1,14 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
-from PIL import Image
 import torch
 from diffusers import StableDiffusionPipeline
 from torch import autocast
 from pydantic import BaseModel
 from typing import List, Optional
 from utils import save_image
-
+import config
 
 app = FastAPI()
 
@@ -19,20 +17,24 @@ app.add_middleware(
 
 
 class GenImage(BaseModel):
-    prompt: str
+    vp: List[int]
     guidance_scale: Optional[float] = 7.5
 
 
 model_id = "runwayml/stable-diffusion-v1-5"
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
-#pipe = pipe.to("cuda")
+pipe = pipe.to("cuda")
 
 
 @app.post("/genimage")
 def gen_image(req: GenImage):
-    with autocast("cpu"):
+    prompt = 'photo of landscape design with '
+    for i, future in enumerate(req.vp):
+        if future:
+            prompt += f' {config.futures[i]},'
+    with autocast("cuda"):
         img = pipe(
-            req.prompt,
+            prompt,
             guidance_scale=req.guidance_scale,
             height=512,
             width=512,
