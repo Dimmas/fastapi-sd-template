@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import torch
 from diffusers import StableDiffusionPipeline
 from torch import autocast
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from utils import save_image
 import config
@@ -17,7 +17,7 @@ app.add_middleware(
 
 
 class GenImage(BaseModel):
-    vp: List[int]
+    vp: List[int] = Field(..., description="vector of user preferences")
     guidance_scale: Optional[float] = 7.5
 
 
